@@ -13,7 +13,7 @@ https://docs.djangoproject.com/en/2.2/ref/settings/
 import os
 import mongoengine
 import configparser
-# from utils.constant import Constant
+from utils.constant import Constant
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -45,6 +45,8 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+
+    'rest_framework',
 
     'booking',
 ]
@@ -85,8 +87,8 @@ WSGI_APPLICATION = 'ride_go.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
+        'ENGINE': '',
+        'NAME': '',
     }
 }
 
@@ -128,3 +130,42 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/2.2/howto/static-files/
 
 STATIC_URL = '/static/'
+
+
+# making directory if not exits to store log file in local machine
+if not os.path.exists(Constant.LOCAL_LOCATION_OF_LOG):
+    os.makedirs(Constant.LOCAL_LOCATION_OF_LOG)
+
+# Just for demonstration purpose.
+LOGFILE_SIZE = 1024 * 1024 * 10
+# Log file count
+LOGFILE_COUNT = 9999
+
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'formatters': {
+        'details': {
+            'format': '%(levelname)-8s %(asctime)s,%(msecs)d  [%(filename)s:%(lineno)d] %(message)s',
+            'datefmt': "%d-%m-%Y %H:%M:%S"
+        },
+
+    },
+    'handlers': {
+        'file': {
+            'level': 'DEBUG',
+            'class': 'logging.handlers.RotatingFileHandler',
+            'filename': Constant.LOCAL_LOCATION_OF_LOG + 'ride_go.log',
+            'formatter': 'details',
+            'maxBytes': LOGFILE_SIZE,
+            'backupCount': LOGFILE_COUNT,
+        },
+    },
+    'loggers': {
+        'booking': {
+            'handlers': ['file'],
+            'level': 'DEBUG',
+            'propagate': True,
+        },
+    }
+}
