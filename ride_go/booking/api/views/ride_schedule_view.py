@@ -3,30 +3,40 @@ from rest_framework import status
 from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated
 
-from django.db.transaction import atomic
-from django.shortcuts import get_object_or_404
-
 from booking.models import RideSchedules
 from booking.api.serializers import RideScheduleRequestSerializer
+from booking.api.services.schedule_service import RideScheduleService
 
 from utils.constant import Constant
 
 
 class RideScheduleAPIView(APIView):
-
-    @atomic
+    """
+    @Definition:
+    This class is used for data processing
+    Process Flow:
+    1. Getting input which flow to run(get_top_rated_author,sort_by_comments)
+    2. Create request for hitting the hackernews endpoint for top page and authors in top page
+    3. Hit the enpoints and get response
+    4. For every response process the data and generate metrics
+    """
     def post(self, request, *args, **kwargs):
         """
+        @Definition:
+        This function is used for creating subtext data i.e what appears below a author i.e its comments, time posted
 
+        @params:
+        subtext_data: subtext data is the subtext html from the page
+
+        @return:
+        subtext_dict: subtext_dict contains keys and values of subtext html
         """
-
         try:
             data = {
                 Constant.STATUS_CODE: 10000,
                 Constant.MESSAGE: Constant.DEFAULT_RESPONSE_MESSAGE,
                 Constant.RESULT: {}
             }
-
 
             ride_serializer = RideScheduleRequestSerializer(data=request.data)
 
@@ -35,7 +45,11 @@ class RideScheduleAPIView(APIView):
                 source = ride_serializer.validated_data['source']
                 destination = ride_serializer.validated_data['destination']
                 time = ride_serializer.validated_data['time']
-
+                RideScheduleService().schedule_ride_reminder(
+                    email, source, destination, time
+                )
+                data[Constant.MESSAGE] = Constant.RIDE_SCHEDULE_SUCCESS_MESSAGE
+                data[Constant.STATUS_CODE] = 200
         except Exception as error:
             self.log.error(traceback.format_exc().replace(
                 Constant.ENTER, Constant.SPACE))

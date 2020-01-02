@@ -23,5 +23,7 @@ class Constant:
     STATUS_CODE = 'status_code'
     MESSAGE = 'message'
     RESULT = 'result'
+    DEFAULT_RESPONSE_MESSAGE = 'Something went wrong!'
+    RIDE_SCHEDULE_SUCCESS_MESSAGE = 'Remider set successfully!'
     DB_DOWN_MESSAGE = 'Could not connect to the database!'
     API_SUCCESS_MESSAGE = 'API successfully worked'

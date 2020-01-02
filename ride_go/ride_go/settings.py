@@ -32,6 +32,7 @@ G_MAP_API_KEY = config.get(stage, 'G_MAP_API_KEY')
 
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = 'w*mu3cd&!t+e2ck9r5qf#ms9al$-v6&8yfp)fe!$3h82d49&ci'
+# SECRET_KEY = config.get(stage, 'SECRET_KEY')
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -88,12 +89,12 @@ WSGI_APPLICATION = 'ride_go.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/2.2/ref/settings/#databases
 
-DATABASES = {
-    'default': {
-        'ENGINE': '',
-        'NAME': '',
-    }
-}
+# DATABASES = {
+#     'default': {
+#         'ENGINE': '',
+#         'NAME': '',
+#     }
+# }
 
 
 # Password validation
