@@ -44,15 +44,22 @@ class RideScheduleAPIView(APIView):
                 email = ride_serializer.validated_data['email']
                 source = ride_serializer.validated_data['source']
                 destination = ride_serializer.validated_data['destination']
-                time = ride_serializer.validated_data['time']
+                arrival_time = ride_serializer.validated_data['arrival_time']
+
+                user_id = kwargs.get('user_id', None)
+                ride_id = kwargs.get('ride_id', None)
+
                 RideScheduleService().schedule_ride_reminder(
-                    email, source, destination, time
+                    user_id, ride_id, email, source,
+                    destination, arrival_time
                 )
+
                 data[Constant.MESSAGE] = Constant.RIDE_SCHEDULE_SUCCESS_MESSAGE
                 data[Constant.STATUS_CODE] = 200
+        
         except Exception as error:
             self.log.error(traceback.format_exc().replace(
                 Constant.ENTER, Constant.SPACE))
-
+            data[Constant.MESSAGE] = str(error)
         finally:
             return Response(data, status=status.HTTP_200_OK, headers=None)

@@ -17,7 +17,8 @@ class Constant:
     FAILED_RIDE_DETAIL_REQUEST_MESSAGE = 'EXCEPTION WHILE REQUESTING UBER API'
 
     # Google MAP API
-    G_DISTANCE_API_ENDPOINT = 'https://maps.googleapis.com/maps/api/distancematrix/json?units=imperial&origins={},{}&destinations={},{}&key={}/'
+    G_DISTANCE_API_ENDPOINT = 'https://maps.googleapis.com/maps/api/distancematrix/json?units=imperial&origins={},{}&destinations={},{}&key={}'
+    FAILED_GMAP_DETAIL_REQUEST_MESSAGE = 'EXCEPTION WHILE REQUESTING GMAP API'
 
     # request constants
     STATUS_CODE = 'status_code'
