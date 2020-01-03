@@ -5,7 +5,10 @@ import configparser
 from mongoengine import *
 import logging.handlers as handlers
 
+from django.conf import settings
+
 from utils.constant import Constant
+
 from booking.models import RideSchedules, GeoCords
 
 
@@ -34,7 +37,7 @@ class RideReminderCronJob:
 
     def invoke_cron(self):
         try:
-            pass
+            print("Run Cron")
         except Exception as e:
             RideReminderCronJob.logger.error(e)
             print(e)
