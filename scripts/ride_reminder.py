@@ -44,9 +44,17 @@ class RideReminderCronJob:
     )
 
     def invoke_cron(self):
-        #TODO: Complete the cron
+        #TODO: This cron is WIP.
         """
         @Definition:
+        1) Fetch all the reminders that are current time + 5 mins and which are not yet
+           notifed yet
+        2) Using this the previous calculated information, query the google map service with
+           this departure time.
+        3) Evaluate and validate the estimated time from the goole map api and query the uber
+           ride api to fetch the ride estimate.
+        4) Check for evaluation_count and notify the user.
+        4) Irrespective of time left or not trigger the Mailer lambda function.
         """
         try:
             msg_bytes = json.dumps({ 
@@ -57,8 +65,8 @@ class RideReminderCronJob:
 
             lambda_resp = (self.aws_client.client
                             .invoke(
-                                FunctionName='ride_reminder_mailer', 
-                                InvocationType='Event', 
+                                FunctionName='ride_reminder_mailer',
+                                InvocationType='Event',
                                 Payload=msg_bytes
                             )
                            )

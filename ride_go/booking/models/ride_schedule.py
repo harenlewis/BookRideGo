@@ -19,6 +19,8 @@ class RideSchedules(Document):
 
     to_notify_ts = DateTimeField(required=True)
 
+    evalutaion_count = IntField(default=1)
+
     created_by_id = UUIDField(binary=False)
     created_dttm = DateTimeField(default=datetime.datetime.utcnow)
     updated_dttm = DateTimeField(default=datetime.datetime.utcnow)
