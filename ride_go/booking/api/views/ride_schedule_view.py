@@ -13,12 +13,7 @@ from utils.constant import Constant
 class RideScheduleAPIView(APIView):
     """
     @Definition:
-    This class is used for data processing
-    Process Flow:
-    1. Getting input which flow to run(get_top_rated_author,sort_by_comments)
-    2. Create request for hitting the hackernews endpoint for top page and authors in top page
-    3. Hit the enpoints and get response
-    4. For every response process the data and generate metrics
+    This class is used for ride schedule api's
     """
     def post(self, request, *args, **kwargs):
         """
@@ -56,7 +51,9 @@ class RideScheduleAPIView(APIView):
 
                 data[Constant.MESSAGE] = Constant.RIDE_SCHEDULE_SUCCESS_MESSAGE
                 data[Constant.STATUS_CODE] = 200
-        
+            else:
+                data[Constant.RESULT] = ride_serializer.errors
+                data[Constant.MESSAGE] = "Improper request!"
         except Exception as error:
             self.log.error(traceback.format_exc().replace(
                 Constant.ENTER, Constant.SPACE))
