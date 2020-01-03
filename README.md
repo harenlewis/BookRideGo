@@ -1,2 +1,4 @@
 # BookRideGo
-Book a cab and get email.
+-----
+
+## Schedule and set reminders to get notifications for your next ride.
