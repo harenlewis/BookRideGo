@@ -44,6 +44,10 @@ class RideReminderCronJob:
     )
 
     def invoke_cron(self):
+        #TODO: Complete the cron
+        """
+        @Definition:
+        """
         try:
             msg_bytes = json.dumps({ 
                 "receiver": "user1@gmail.com", 
