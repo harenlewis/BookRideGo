@@ -1,4 +1,5 @@
 import json
+import boto3
 import logging
 import datetime
 import configparser
@@ -35,9 +36,30 @@ class RideReminderCronJob:
     MONGO_HOST = config.get(stage, 'MONGO_HOST_URI')
     mongoengine.connect(host=MONGO_HOST)
 
+    ACCESS_KEY = config.get(stage, 'AWS_ACCESS_KEY')
+    SECRET_KEY = config.get(stage, 'AWS_SECRET_KEY')
+
+    self.aws_client = boto3.client(
+        'lambda',
+        aws_access_key_id=ACCESS_KEY,
+        aws_secret_access_key=SECRET_KEY,
+    )
+
     def invoke_cron(self):
         try:
-            print("Run Cron")
+            msg_bytes = json.dumps({ 
+                "receiver": "harenlewis@gmail.com", 
+                "subject": "Reminder - To book an Uber", 
+                "message": "" 
+            }).encode('utf-8')
+
+            lambda_resp = (client
+                            .invoke(
+                                FunctionName='ride_reminder_mailer', 
+                                InvocationType='Event', 
+                                Payload=msg_bytes
+                            )
+                           )
         except Exception as e:
             RideReminderCronJob.logger.error(e)
             print(e)
