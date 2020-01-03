@@ -6,9 +6,7 @@ import configparser
 from mongoengine import *
 import logging.handlers as handlers
 
-from django.conf import settings
-
-from utils.constant import Constant
+from ride_go.utils.constant import Constant
 
 from booking.models import RideSchedules, GeoCords
 
@@ -48,12 +46,12 @@ class RideReminderCronJob:
     def invoke_cron(self):
         try:
             msg_bytes = json.dumps({ 
-                "receiver": "harenlewis@gmail.com", 
+                "receiver": "user1@gmail.com", 
                 "subject": "Reminder - To book an Uber", 
                 "message": "" 
             }).encode('utf-8')
 
-            lambda_resp = (client
+            lambda_resp = (self.aws_client.client
                             .invoke(
                                 FunctionName='ride_reminder_mailer', 
                                 InvocationType='Event', 

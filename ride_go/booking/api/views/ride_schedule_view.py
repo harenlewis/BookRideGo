@@ -18,13 +18,15 @@ class RideScheduleAPIView(APIView):
     def post(self, request, *args, **kwargs):
         """
         @Definition:
-        This function is used for creating subtext data i.e what appears below a author i.e its comments, time posted
+        Handles post request to this view
 
         @params:
-        subtext_data: subtext data is the subtext html from the page
+        request: Django request object
 
         @return:
-        subtext_dict: subtext_dict contains keys and values of subtext html
+        status_code: hhtp custom status code.
+        message: Appropriate message to the user
+        result: {}
         """
         try:
             data = {

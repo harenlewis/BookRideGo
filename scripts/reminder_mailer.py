@@ -1,7 +1,6 @@
+import os
 import smtplib
 from email.mime.text import MIMEText
-import os
-from simplecrypt import encrypt, decrypt
 from base64 import b64encode, b64decode
 
 def send_mail(request):
@@ -9,14 +8,9 @@ def send_mail(request):
     sender = os.environ.get('sender')
     password = os.environ.get('sender')
 
-    # encoded_cipher=os.environ.get('Password')
     receiver = request_json['receiver']
     subject = request_json['subject']
     message = request_json['message']
-    # key=request_json['key']
-
-    # cipher=b64decode(encoded_cipher)
-    # password=decrypt(key, cipher).decode("utf-8")
     
     msg_content = """
     <html>

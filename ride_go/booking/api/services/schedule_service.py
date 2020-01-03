@@ -30,29 +30,25 @@ class RideScheduleService:
     def schedule_ride_reminder(self, user_id, ride_id, email, source, destination, arrival_time):
         """
         @Definition:
-        This function is used for creating subtext data i.e what appears below a 
-        author i.e its comments, time posted
+        This function is used for calculating worst case time for the reminder to 
+        be sent to the user and writes it to the DB.
         
         get temp time:
-            - add safe 60mins to G_TIME
-            - add 30mins Uber Time
-            - Minus it from the arrival time to get Temp departuer time
-            - Write it to DB for the cron to do its magic
+          - add safe 60mins to G_TIME
+          - add 30mins Uber Time
+          - Minus it from the arrival time to get Temp departure time
+          - Write it to DB for the cron to calculate approximate time.
 
         @params:
-        user_id
-        ride_id
-        email: 
-        source:
-        destination:
-        time:
+        user_id: UUID of requesting user
+        ride_id: UUID of ride
+        email: User's email
+        source: Source location co-ordinates
+        destination: Destination location co-ordinates
+        time: Arrival time
 
         @return:
-        subtext_dict: subtext_dict contains keys and values of subtext html
-
-        arrival_time_ddtm = datetime.fromtimestamp(arrival_time)
-        added_arrival_time_ddtm = arrival_time_ddtm + timedelta(seconds=60*30)
-        added_arrival_time_ddtm.timestamp()
+        bool: validates all the dependent services have run successfully.
         """
         try:
             source_lng = source.get('lng', None)
@@ -69,10 +65,8 @@ class RideScheduleService:
                 )
             )
 
-            if fetch_distance_success:
-                pass
-            else:
-                pass
+            if not fetch_distance_success:
+                return fetch_distance_success
 
             arrival_time_obj = datetime.fromtimestamp(arrival_time)
             total_time_deviation_seconds = distance_time_estimate + Constant.MAX_DEVIATION + Constant.MAX_RIDE_ESTIMATE
