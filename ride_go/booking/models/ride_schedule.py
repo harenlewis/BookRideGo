@@ -17,6 +17,8 @@ class RideSchedules(Document):
 
     notified = BooleanField(default=False)
 
+    arrival_ts = DateTimeField(required=True)
+
     to_notify_ts = DateTimeField(required=True)
 
     evalutaion_count = IntField(default=1)

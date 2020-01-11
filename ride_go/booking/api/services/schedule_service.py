@@ -86,10 +86,11 @@ class RideScheduleService:
             )
 
             scheduled_ride_reminder = RideSchedules(
-                uuid=ride_id,
+                uuid=uuid.uuid4(),
                 email=email,
                 source=source_cords,
                 destination=destination_cords,
+                arrival_ts=arrival_time_obj,
                 to_notify_ts=to_notify_ts,
                 created_by_id=user_id
             )
