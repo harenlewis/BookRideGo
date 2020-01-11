@@ -5,14 +5,19 @@ import logging
 
 from django.conf import settings
 
-from utils.constant import Constant
+# from utils.constant import Constant
 
 
 class GoogleDistanceService:
     log = logging.getLogger(__name__)
 
+    # Google MAP API
+    MAX_DEVIATION = 3600 # 60mins in seconds
+    G_DISTANCE_API_ENDPOINT = 'https://maps.googleapis.com/maps/api/distancematrix/json?units=imperial&origins={},{}&destinations={},{}&key={}'
+    FAILED_GMAP_DETAIL_REQUEST_MESSAGE = 'EXCEPTION WHILE REQUESTING GMAP API'
+
     @staticmethod
-    def get_distance_matrix_details(origin_lng, origin_lat, dest_lng, dest_lat, departure=None):
+    def get_distance_matrix_details(origin_lng, origin_lat, dest_lng, dest_lat, arrival_time=None):
         """
         @Definition:
         This function is used for creating subtext data i.e what appears below a 
@@ -23,7 +28,7 @@ class GoogleDistanceService:
         origin_lat:
         dest_lng:
         dest_lat:
-        departure:
+        arrival_time:
 
         @return:
         fetch_distance_success: 
@@ -33,11 +38,11 @@ class GoogleDistanceService:
         distance_time_estimate = None
 
         try:
-            g_distance_endpoint = Constant.G_DISTANCE_API_ENDPOINT.format(
+            g_distance_endpoint = GoogleDistanceService.G_DISTANCE_API_ENDPOINT.format(
                 origin_lng, origin_lat, dest_lng, dest_lat, settings.G_MAP_API_KEY)
 
-            if departure is not None:
-                g_distance_endpoint = '{}&departure_time={}'.format(g_distance_endpoint, departure)
+            if arrival_time is not None:
+                g_distance_endpoint = '{}&arrival_time={}'.format(g_distance_endpoint, arrival_time)
 
             res = requests.get(g_distance_endpoint)
 
@@ -51,7 +56,7 @@ class GoogleDistanceService:
 
         except Exception as e:
             print("Exception from Google Maps API: ", str(e))
-            message = Constant.FAILED_GMAP_DETAIL_REQUEST_MESSAGE + '    ' + str(e)
+            message = GoogleDistanceService.FAILED_GMAP_DETAIL_REQUEST_MESSAGE + '    ' + str(e)
             GoogleDistanceService.log.error(message)
 
         return fetch_distance_success, distance_time_estimate
