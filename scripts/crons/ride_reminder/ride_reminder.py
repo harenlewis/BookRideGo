@@ -40,6 +40,8 @@ class RideReminderCronJob:
     MONGO_HOST = config.get(stage, 'MONGO_HOST_URI')
     connect(host=MONGO_HOST)
 
+    G_MAP_API_KEY = config.get(stage, 'G_MAP_API_KEY')
+
     ACCESS_KEY = config.get(stage, 'AWS_ACCESS_KEY')
     SECRET_KEY = config.get(stage, 'AWS_SECRET_KEY')
     REGION_NAME = config.get(stage, 'REGION_NAME')
@@ -52,7 +54,6 @@ class RideReminderCronJob:
     )
 
     def invoke_cron(self):
-        #TODO: This cron is WIP.
         """
         @Definition:
         1) Fetch all the reminders that are current time + 5 mins and which are not yet
@@ -65,18 +66,24 @@ class RideReminderCronJob:
         4) Irrespective of time left or not trigger the Mailer lambda function.
         """
         try:
-            self.current_utc_ts = datetime.now()
-            upper_limit_ts = current_utc_ts + timedelta(seconds=3600)
+            RideReminderCronJob.logger.info("********** Running Reminder Cron **********")
+            self.current_utc_ts = datetime.now(tz=timezone.utc)
+            upper_limit_ts = self.current_utc_ts + timedelta(minutes=120)
 
+            RideReminderCronJob.logger.info("Current Time: " + str(self.current_utc_ts.timestamp()))
+            RideReminderCronJob.logger.info("Upper limit Time: " + str(upper_limit_ts.timestamp()))
+
+            RideReminderCronJob.logger.info("Fetching schedules to process and notify!")
             to_process_reminders = (RideSchedules
                                         .objects(
-                                            Q(notified=False)
-                                            # & Q(to_notify_ts__gte=current_utc_ts) & 
-                                            # Q(to_notify_ts__lte=upper_limit_ts)
+                                            Q(notified=False) &
+                                            Q(to_notify_ts__gte=self.current_utc_ts) & 
+                                            Q(to_notify_ts__lte=upper_limit_ts)
                                         )
                                     )
 
             for reminder in to_process_reminders:
+                RideReminderCronJob.logger.info("Processing schedule:  " + str(reminder.uuid))
                 print("DOC UUID: ", reminder.uuid)
                 to_remind = self.evaluate_reminder(reminder)
 
@@ -85,19 +92,22 @@ class RideReminderCronJob:
             print(e)
 
     def evaluate_reminder(self, ride_remind_doc):
+
+        user_email = ride_remind_doc.email
+
         start_lng = ride_remind_doc.source['lng']
         start_lat = ride_remind_doc.source['lat']
 
         dest_lng = ride_remind_doc.destination['lng']
         dest_lat = ride_remind_doc.destination['lat']
 
-        eval_cnt = ride_remind_doc.evaluation_count
+        eval_cnt = ride_remind_doc.evalutaion_count
         arrival_time_obj = ride_remind_doc.arrival_ts
 
         if eval_cnt == 2:
-            ride_remind_doc.notifed = True
+            ride_remind_doc.notified = True
             ride_remind_doc.save()
-            self.send_email(self, user_email_id)
+            self.send_email(user_email)
             return
 
         to_notify, notif_ts = (self.validate_time_acc_gmap(
@@ -106,76 +116,74 @@ class RideReminderCronJob:
 
         if not to_notify:
             ride_remind_doc.to_notify_ts = notif_ts
-            ride_remind_doc.evaluation_count = eval_cnt + 1
+            ride_remind_doc.evalutaion_count = eval_cnt + 1
             ride_remind_doc.save()
             return
 
-        fetch_success, ride_estimate = (UberRideDeatils
-                                        .get_ride_details(
-                                            start_lng, start_lat
-                                        )
-                                       )
+        # fetch_success, ride_estimate = (UberRideDeatils
+        #                                 .get_ride_details(
+        #                                     start_lng, start_lat
+        #                                 )
+        #                                )
 
-        if to_remind:
-            ride_remind_doc.notifed = True
-            ride_remind_doc.save()
-            self.send_email(self, user_email_id)
-    
+        ride_remind_doc.notified = True
+        ride_remind_doc.save()
+        self.send_email(user_email)
+
     def validate_time_acc_gmap(self, source_lng, source_lat, destination_lng, destination_lat, arrival_time):
         to_notify = False
-        notif_ts = ''
-
-        arrival_time_ts = arrival_time.timestamp()
+        new_to_notify_ts = None
 
         fetch_distance_success, distance_time_estimate = (
                 GoogleDistanceService
                 .get_distance_matrix_details(
                     source_lng, source_lat,
                     destination_lng, destination_lat,
-                    arrival_time_ts
+                    self.G_MAP_API_KEY, arrival_time.timestamp()
                 )
             )
 
         if not fetch_distance_success:
-            to_notify = True
+            # postpone to check again, since gmap api is down
+            new_to_notify_ts = arrival_time + timedelta(minutes=10)
+            return to_notify, new_to_notify_ts
 
-        # new_dept_time = arr time - cur map time
-        # if new_dept_time is < currnet time or new_dept_time - current_time is less than 20 min 
-        # send notif
+        # new_dept_time = arr_time - cur_map_time
+
+        # if new_dept_time is < currnet time or new_dept_time - current_time is less 
+        # than 20 min 
+            # send notif
         # else
-        # update to_notify_ts with new_dept_time and eval count + 1
+            # update to_notify_ts with new_dept_time and eval count + 1
 
-        new_to_notify_ts = arrival_time_ts - distance_time_estimate
-        new_to_notify_ts_obj = datetime.fromtimestamp(new_to_notify_ts)
+        total_time_deviation_seconds = distance_time_estimate + Constant.MAX_RIDE_ESTIMATE
+        new_to_notify_ts = arrival_time - timedelta(seconds=total_time_deviation_seconds)
 
-        safe_departure_ddtm = arrival_time_obj + timedelta(seconds=total_time_deviation_seconds)
+        time_diff = new_to_notify_ts - self.current_utc_ts
 
-        time_diff = new_to_notify_ts_obj - self.current_utc_ts
-        if new_to_notify_ts_obj < self.current_utc_ts or time_diff < 20:
+        if new_to_notify_ts < self.current_utc_ts or time_diff.total_seconds() < 1200:
             to_notify = True
 
-        to_notify_ts = safe_departure_ddtm
-
-        return to_notify, notif_ts
+        return to_notify, new_to_notify_ts
 
     def send_email(self, user_email_id):
-        if to_remind:
-            print("Triggering Lambda mailer!")
-            # send an email to the user to book a cab
-            msg_json = json.dumps({ 
-                "receiver": user_email_id, 
-                "subject": "Reminder - To book an Uber", 
-                "message": "" 
-            })
-            msg_bytes = msg_json.encode('utf-8')
+        # send an email to the user to b
+        RideReminderCronJob.logger.info("Triggering mail for user id:  " + str(user_email_id))
 
-            lambda_resp = (self.aws_client
-                            .invoke(
-                                FunctionName='ride_reminder_mailer',
-                                InvocationType='Event',
-                                Payload=msg_bytes
-                            )
-                           )
+        msg_json = json.dumps({ 
+            "receiver": user_email_id, 
+            "subject": "Reminder - To book an Uber", 
+            "message": "" 
+        })
+        msg_bytes = msg_json.encode('utf-8')
+
+        lambda_resp = (self.aws_client
+                        .invoke(
+                            FunctionName='ride_reminder_mailer',
+                            InvocationType='Event',
+                            Payload=msg_bytes
+                        )
+                      )
 
 
 if __name__ == '__main__':

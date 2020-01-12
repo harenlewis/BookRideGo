@@ -10,6 +10,7 @@ import logging
 from bson.objectid import ObjectId
 from datetime import datetime, timedelta
 
+from django.conf import settings
 from django.utils import timezone
 from django.core.exceptions import ValidationError
 
@@ -61,17 +62,18 @@ class RideScheduleService:
                 GoogleDistanceService
                 .get_distance_matrix_details(
                     source_lng, source_lat,
-                    destination_lng, destination_lat
+                    destination_lng, destination_lat, settings.G_MAP_API_KEY
                 )
             )
 
             if not fetch_distance_success:
                 return fetch_distance_success
 
-            arrival_time_obj = datetime.fromtimestamp(arrival_time)
+            arrival_time_obj = datetime.fromtimestamp(arrival_time, tz=timezone.utc) + timedelta(hours=5.5)
+
             total_time_deviation_seconds = distance_time_estimate + Constant.MAX_DEVIATION + Constant.MAX_RIDE_ESTIMATE
 
-            safe_departure_ddtm = arrival_time_obj + timedelta(seconds=total_time_deviation_seconds)
+            safe_departure_ddtm = arrival_time_obj - timedelta(seconds=total_time_deviation_seconds)
 
             to_notify_ts = safe_departure_ddtm
 

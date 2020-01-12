@@ -17,7 +17,7 @@ class GoogleDistanceService:
     FAILED_GMAP_DETAIL_REQUEST_MESSAGE = 'EXCEPTION WHILE REQUESTING GMAP API'
 
     @staticmethod
-    def get_distance_matrix_details(origin_lng, origin_lat, dest_lng, dest_lat, arrival_time=None):
+    def get_distance_matrix_details(origin_lng, origin_lat, dest_lng, dest_lat, G_MAP_API_KEY, arrival_time=None):
         """
         @Definition:
         This function is used for creating subtext data i.e what appears below a 
@@ -39,7 +39,7 @@ class GoogleDistanceService:
 
         try:
             g_distance_endpoint = GoogleDistanceService.G_DISTANCE_API_ENDPOINT.format(
-                origin_lng, origin_lat, dest_lng, dest_lat, settings.G_MAP_API_KEY)
+                origin_lng, origin_lat, dest_lng, dest_lat, G_MAP_API_KEY)
 
             if arrival_time is not None:
                 g_distance_endpoint = '{}&arrival_time={}'.format(g_distance_endpoint, arrival_time)

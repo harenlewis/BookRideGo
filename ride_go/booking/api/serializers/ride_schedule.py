@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone, timedelta
 from rest_framework import serializers
 
 
@@ -17,8 +17,12 @@ class RideScheduleRequestSerializer(serializers.Serializer):
         """
         Check if time is greater than current or else raise error.
         """
-        arrival_time_dttm = datetime.fromtimestamp(value)
-        current_dttm = datetime.utcnow()
+        arrival_time_dttm = datetime.fromtimestamp(value, tz=timezone.utc)
+        current_dttm = datetime.now(tz=timezone.utc)
+
+        # print("arrival_time_dttm: ", arrival_time_dttm)
+        # print("current_dttm: ", current_dttm)
+
         if arrival_time_dttm < current_dttm:
             raise serializers.ValidationError("Not valid datetime")
         return value
