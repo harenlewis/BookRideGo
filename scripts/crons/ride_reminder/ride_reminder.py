@@ -2,7 +2,7 @@
 import json
 import boto3
 import logging
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 import configparser
 from mongoengine import *
@@ -67,7 +67,7 @@ class RideReminderCronJob:
         """
         try:
             RideReminderCronJob.logger.info("********** Running Reminder Cron **********")
-            self.current_utc_ts = datetime.now(tz=timezone.utc)
+            self.current_utc_ts = datetime.now()
             upper_limit_ts = self.current_utc_ts + timedelta(minutes=120)
 
             RideReminderCronJob.logger.info("Current Time: " + str(self.current_utc_ts.timestamp()))
@@ -104,7 +104,7 @@ class RideReminderCronJob:
         eval_cnt = ride_remind_doc.evalutaion_count
         arrival_time_obj = ride_remind_doc.arrival_ts
 
-        if eval_cnt == 2:
+        if eval_cnt == 3:
             ride_remind_doc.notified = True
             ride_remind_doc.save()
             self.send_email(user_email)
@@ -131,6 +131,13 @@ class RideReminderCronJob:
         self.send_email(user_email)
 
     def validate_time_acc_gmap(self, source_lng, source_lat, destination_lng, destination_lat, arrival_time):
+        """
+        1) Calculate new_notify_time; based on my current map conditions and constant ride 
+           estimate
+        2) if new_notfiy_time is less than the current time or the difference is only 20 min
+          between them, then we notify the user and send a email 
+        3) Else we save the new_notify_time in DB and increment the evalutaion coutner.
+        """
         to_notify = False
         new_to_notify_ts = None
 
@@ -145,16 +152,8 @@ class RideReminderCronJob:
 
         if not fetch_distance_success:
             # postpone to check again, since gmap api is down
-            new_to_notify_ts = arrival_time + timedelta(minutes=10)
+            new_to_notify_ts = arrival_time + timedelta(minutes=10) + timedelta(hours=5.5)
             return to_notify, new_to_notify_ts
-
-        # new_dept_time = arr_time - cur_map_time
-
-        # if new_dept_time is < currnet time or new_dept_time - current_time is less 
-        # than 20 min 
-            # send notif
-        # else
-            # update to_notify_ts with new_dept_time and eval count + 1
 
         total_time_deviation_seconds = distance_time_estimate + Constant.MAX_RIDE_ESTIMATE
         new_to_notify_ts = arrival_time - timedelta(seconds=total_time_deviation_seconds)
