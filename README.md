@@ -94,6 +94,7 @@ The solution to the this problem is divided into two parts
 
 1) When the user sets the reminder:
    a) We take the arrival time (arrival_ts) from the user.
+   
    b) Find out the safest time to departure for the user, i.e
      safe_dept_ts = arrival_ts - (time_to_travel_ts + uber_ride_estimate_ts + deviation_ts)
      This is the time which is appropriate to send out a notification to the user.
@@ -102,6 +103,7 @@ The solution to the this problem is divided into two parts
 2) Ride notifier is a cron job which runs every minunte.
    a) It fetches all the ride schedules which have not been notfied yet an fall
       between the current time and current_time + 5 min
+      
    b) It evalutes the schedule ride and validates the time to notify the user. It's working is as below:
         i) Calculate new_notify_time; based on the current map conditions and constant ride
            estimate.
