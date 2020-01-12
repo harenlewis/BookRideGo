@@ -67,13 +67,16 @@ class RideScheduleService:
             )
 
             if not fetch_distance_success:
-                return fetch_distance_success
+                raise Exception("Google service is currently down! Could not fetch map data.")
 
             arrival_time_obj = datetime.fromtimestamp(arrival_time, tz=timezone.utc) + timedelta(hours=5.5)
 
             total_time_deviation_seconds = distance_time_estimate + Constant.MAX_DEVIATION + Constant.MAX_RIDE_ESTIMATE
 
             safe_departure_ddtm = arrival_time_obj - timedelta(seconds=total_time_deviation_seconds)
+
+            if  not (safe_departure_ddtm >  (timezone.now() + timedelta(hours=5.5))):
+                raise Exception("It's already too late. Please book a cab immediately")
 
             to_notify_ts = safe_departure_ddtm
 

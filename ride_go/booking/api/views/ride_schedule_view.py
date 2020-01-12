@@ -1,3 +1,6 @@
+import logging
+import traceback
+
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.views import APIView
@@ -15,6 +18,8 @@ class RideScheduleAPIView(APIView):
     @Definition:
     This class is used for ride schedule api's
     """
+    log = logging.getLogger(__name__)
+
     def post(self, request, *args, **kwargs):
         """
         @Definition:
@@ -58,7 +63,7 @@ class RideScheduleAPIView(APIView):
                 data[Constant.MESSAGE] = "Improper request!"
         except Exception as error:
             self.log.error(traceback.format_exc().replace(
-                Constant.ENTER, Constant.SPACE))
+                '\n', ' '))
             data[Constant.MESSAGE] = str(error)
         finally:
             return Response(data, status=status.HTTP_200_OK, headers=None)
