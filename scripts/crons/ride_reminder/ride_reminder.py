@@ -68,7 +68,7 @@ class RideReminderCronJob:
         try:
             RideReminderCronJob.logger.info("********** Running Reminder Cron **********")
             self.current_utc_ts = datetime.now()
-            upper_limit_ts = self.current_utc_ts + timedelta(minutes=120)
+            upper_limit_ts = self.current_utc_ts + timedelta(minutes=5)
 
             RideReminderCronJob.logger.info("Current Time: " + str(self.current_utc_ts.timestamp()))
             RideReminderCronJob.logger.info("Upper limit Time: " + str(upper_limit_ts.timestamp()))
@@ -104,7 +104,7 @@ class RideReminderCronJob:
         eval_cnt = ride_remind_doc.evalutaion_count
         arrival_time_obj = ride_remind_doc.arrival_ts
 
-        if eval_cnt == 3:
+        if eval_cnt == 2:
             ride_remind_doc.notified = True
             ride_remind_doc.save()
             self.send_email(user_email)
@@ -115,6 +115,8 @@ class RideReminderCronJob:
         )
 
         if not to_notify:
+            RideReminderCronJob.logger.info("Updating evalutaion count to " + str(eval_cnt + 1))
+            RideReminderCronJob.logger.info("Updating notify ts to " + str(notif_ts))            
             ride_remind_doc.to_notify_ts = notif_ts
             ride_remind_doc.evalutaion_count = eval_cnt + 1
             ride_remind_doc.save()
@@ -153,6 +155,7 @@ class RideReminderCronJob:
         if not fetch_distance_success:
             # postpone to check again, since gmap api is down
             new_to_notify_ts = arrival_time + timedelta(minutes=10) + timedelta(hours=5.5)
+            RideReminderCronJob.logger.info("GMap failed adding more 10min " + str(new_to_notify_ts))
             return to_notify, new_to_notify_ts
 
         total_time_deviation_seconds = distance_time_estimate + Constant.MAX_RIDE_ESTIMATE
@@ -162,6 +165,8 @@ class RideReminderCronJob:
 
         if new_to_notify_ts < self.current_utc_ts or time_diff.total_seconds() < 1200:
             to_notify = True
+
+        RideReminderCronJob.logger.info("New notif ts " + str(new_to_notify_ts))
 
         return to_notify, new_to_notify_ts
 
