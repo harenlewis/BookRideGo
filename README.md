@@ -93,20 +93,28 @@ The solution to the this problem is divided into two parts
 2: Actually sending out the reminder to the user. (Ride notifier cron)
 
 1) When the user sets the reminder:
+
    a) We take the arrival time (arrival_ts) from the user.
+   
    b) Find out the safest time to departure for the user, i.e
      safe_dept_ts = arrival_ts - (time_to_travel_ts + uber_ride_estimate_ts + deviation_ts)
      This is the time which is appropriate to send out a notification to the user.
      But this time is not optimal. Hence we write to the DB and store it for processing later. Now, we go to part 2 of the solution.
 
 2) Ride notifier is a cron job which runs every minunte.
+
    a) It fetches all the ride schedules which have not been notfied yet an fall
       between the current time and current_time + 5 min
+      
    b) It evalutes the schedule ride and validates the time to notify the user. It's working is as below:
+  
         i) Calculate new_notify_time; based on the current map conditions and constant ride
            estimate.
+           
         ii) Evaluation count is the number of times a ride schedule has been processed and notify_ts has been recalculated. If evalution count is 3 we notify the user directly without any checks.
+        
         ii) If new_notfiy_time is less than the current time or the difference is only 20       min between them, then we notify the user and send a email
+        
         iv) Else we save the new_notify_time in DB and increment the evalutaion coutner.
 
 Note: In this entire solution we did not use the Uber API. Valid aussumptions have been made based on user behaviour.
